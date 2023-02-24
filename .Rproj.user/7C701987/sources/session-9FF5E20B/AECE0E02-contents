@@ -70,29 +70,23 @@ for(i in seq_along(modfiles)){
 res_summary <- do.call(rbind, res)
 pred_stack <- do.call(raster::stack, pred)
 
+
+
 #####code by Laura #################################################################
+#I would actually like to reproduce this code for the jemie Kass vinette  but i cannot make it work 
+# remove the models with NA AICc
+slected_model <- res %>% filter(delta.AICc==NA)
+opt.aicc
+#slect the model with the lowest omission rate and the highest AUC
+slected_model <- res %>% 
+  filter(or.10p.avg == min(or.10p.avg)) %>% 
+  filter(auc.val.avg == max(auc.val.avg))
 
-modfiles <- list.files("Results/2022-12-07_ENMeval_results", full.name = T)
-
-res <- list() #this is for the results 
-pred <- list() # this is for the raster model results 
-
+####  this is what is have tried! 
+##here I'm only using the omission rate to try to run the loop but i could not relly make it work 
 for(i in seq_along(modfiles)){
   mod <- readRDS(modfiles[i])
   res[[i]] <- mod@results[which(mod@results$or.10p.avgs==min(mod@results$or.10p.avg))]
   pred[[i]] <- mod@predictions[which (mod@results$or.10p.avg == min(mod@results$or.10p.avg))]
 }
-
-res_summary <- do.call(rbind, res)
-pred_stack <- do.call(raster::stack, pred)
-
-######I would actually like to reproduce this code  but i cannot make it work really 
-slected_model <- res %>% filter(delta.AICc == NA)
-opt.aicc
-
-slected_model <- res %>% 
-  filter(or.10p.avg == min(or.10p.avg)) %>% 
-  filter(auc.val.avg == max(auc.val.avg))
-
-###############################################################################
-#try git hub 
+###
