@@ -70,8 +70,6 @@ for(i in seq_along(modfiles)){
 res_summary <- do.call(rbind, res)
 pred_stack <- do.call(raster::stack, pred)
 
-
-
 #####code by Laura #################################################################
 #I would actually like to reproduce this code for the jemie Kass vinette  but i cannot make it work 
 # remove the models with NA AICc
