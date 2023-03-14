@@ -10,7 +10,6 @@ envs <- stack(list.files("Data/Derived/envs", full.names = TRUE))
 
 #LOAD OCCURENCES RECORD AND FILTER 
 load("Data/FINAL_RECS.Rdata")
-# full <- full[!is.na((full[,c('LONGDEC','LATDEC')])),] #I'm not sure what this line does 
 
 #without considering the islands
 GEO_ext <-raster::extract(envs[[1]], full[,c('LONGDEC','LATDEC')])
@@ -18,7 +17,7 @@ oc <- dplyr::filter(full, !is.na(GEO_ext)) #these are the cleaned occurencese
 
 envs[[1]] <- as.factor(envs[[1]])
 
-#running the models 
+#RUNNING THE MODELS 
 for (sp in 1:length(unique(oc$CODE))){
   
   # This line to skip some species that dont work
@@ -54,37 +53,31 @@ for (sp in 1:length(unique(oc$CODE))){
   }
 }
 
-#MODEL SELECTION code by bob ################################################## 
-
-modfiles <- list.files("results/2022-12-07_ENMeval_results" , full.names = T)
-
+#MODEL SELECTION 
+#load mod files 
+modfiles <- list.files("/Users/laumo791/Documents/PR/C1/Results/2022-12-07_ENMeval_results" , full.names = T)
+#create empty lists 
 res <- list() #this is for the results 
 pred <- list() # this is for the raster model results 
 
+#select the models with the the lowest omission rate at 10p and the hisghest AUC
 for(i in seq_along(modfiles)){
+  print(i)
   mod <- readRDS(modfiles[i])
-  res[[i]] <- mod@results[which(mod@results$cbi.trains==max(mod@results$cbi.train))]
-  pred[[i]] <- mod@predictions[[which(mod@results$cbi.train==max(mod@results$cbi.train))]]
+  
+  tmpres <- mod@results %>% 
+    filter(or.10p.avg == min(or.10p.avg)) %>% 
+    filter(auc.val.avg == max(auc.val.avg))
+  
+  res[[i]] <- tmpres[1,]
+  
+  pred[[i]] <- mod@predictions[[which(names(mod@predictions)==res[[i]]$tune.args)]]
 }
 
-res_summary <- do.call(rbind, res)
-pred_stack <- do.call(raster::stack, pred)
+#tables of all of the results 
+resall <- do.call(rbind, res)
+hist(resall$auc.train)
 
-#####code by Laura #################################################################
-#I would actually like to reproduce this code for the jemie Kass vinette  but i cannot make it work 
-# remove the models with NA AICc
-slected_model <- res %>% filter(delta.AICc==NA)
-opt.aicc
-#slect the model with the lowest omission rate and the highest AUC
-slected_model <- res %>% 
-  filter(or.10p.avg == min(or.10p.avg)) %>% 
-  filter(auc.val.avg == max(auc.val.avg))
+#raster stack of all of the predictions 
+predall <- do.call(stack, pred)
 
-####  this is what is have tried! 
-##here I'm only using the omission rate to try to run the loop but i could not relly make it work 
-for(i in seq_along(modfiles)){
-  mod <- readRDS(modfiles[i])
-  res[[i]] <- mod@results[which(mod@results$or.10p.avgs==min(mod@results$or.10p.avg))]
-  pred[[i]] <- mod@predictions[which (mod@results$or.10p.avg == min(mod@results$or.10p.avg))]
-}
-###
